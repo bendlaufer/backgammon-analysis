@@ -1,0 +1,9 @@
+datasets
+pillow
+jupyter
+ipykernel
+transformers
+tokenizers
+torch
+accelerate
+huggingface_hub

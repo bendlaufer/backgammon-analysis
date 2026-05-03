@@ -1,0 +1,23 @@
+.venv/
+__pycache__/
+*.py[cod]
+
+# Local data artifacts and downloads
+data/
+datasets/
+downloads/
+artifacts/
+outputs/
+*.parquet
+*.arrow
+*.jsonl
+*.csv
+*.tsv
+*.zip
+
+# Hugging Face and model caches
+.cache/
+hf_cache/
+
+# Notebook checkpoints
+.ipynb_checkpoints/
