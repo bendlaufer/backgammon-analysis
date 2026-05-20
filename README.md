@@ -2,6 +2,56 @@
 
 This repository is set up to analyze publicly available datasets of backgammon games.
 
+## RL engine foundation
+
+The `bg_rl/` package contains the first environment-oriented primitives for an
+end-to-end reinforcement learning backgammon system:
+
+- immutable checker/cube/match state objects
+- legal checker-action generation for dice rolls
+- deterministic checker transitions
+- compact tensor state encoding for policy/value models
+
+Run the focused tests with:
+
+```bash
+make test
+```
+
+Validate a 100-log slice of the local raw archive against the simulator:
+
+```bash
+make validate-mat
+```
+
+Export a validated JSONL trajectory sample:
+
+```bash
+make export-trajectories
+```
+
+Train a small CPU-friendly behavior-cloning policy baseline:
+
+```bash
+make train-bc
+```
+
+Summarize the exported trajectory rows:
+
+```bash
+make trajectory-stats
+```
+
+Train a small CPU-friendly supervised value baseline:
+
+```bash
+make train-value
+```
+
+The current implementation is deliberately not an eXtreme Gammon clone. It is
+the exact simulator substrate needed for self-play, policy/value learning, and
+future cube/match-equity training.
+
 ## Setup
 
 Create and activate a local virtual environment (one-time):
