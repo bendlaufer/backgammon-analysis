@@ -1,5 +1,6 @@
 import json
 import unittest
+import zipfile
 
 import torch
 
@@ -15,6 +16,8 @@ from bg_rl.bc import (
     masked_cross_entropy,
     record_to_bc_sample,
 )
+from bg_rl.mat import parse_match_text
+from bg_rl.trajectory import match_to_compact_records
 
 
 class BehaviorCloningTests(unittest.TestCase):
@@ -32,6 +35,16 @@ class BehaviorCloningTests(unittest.TestCase):
 
         self.assertEqual(sample.candidate_features.shape[1], BC_FEATURE_DIM)
         self.assertEqual(sample.selected_index, self.record["selected_action_index"])
+
+    def test_compact_record_to_bc_sample_regenerates_label(self) -> None:
+        with zipfile.ZipFile("data/Arkadium_Backgammon_full_data_gamelogs_001.zip") as zf:
+            text = zf.read("1200001.mat").decode("utf-8")
+        compact = match_to_compact_records(parse_match_text(text), source_file="1200001.mat")[0]
+
+        sample = record_to_bc_sample(compact)
+
+        self.assertEqual(sample.selected_index, 2)
+        self.assertEqual(sample.candidate_features.shape[1], BC_FEATURE_DIM)
 
     def test_feature_encoders_have_stable_shapes(self) -> None:
         self.assertEqual(tuple(encode_state_record(self.record["state"]).shape), (36,))

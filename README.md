@@ -30,6 +30,12 @@ Export a validated JSONL trajectory sample:
 make export-trajectories
 ```
 
+Export compact trajectory rows that regenerate legal actions on load:
+
+```bash
+make export-compact-trajectories
+```
+
 Train a small CPU-friendly behavior-cloning policy baseline:
 
 ```bash

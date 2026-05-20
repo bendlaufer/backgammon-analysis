@@ -11,6 +11,12 @@ import torch
 from torch import nn
 from torch.utils.data import Dataset
 
+from bg_rl.trajectory import (
+    action_to_tokens,
+    legal_actions_from_record,
+    selected_action_index_from_record,
+)
+
 
 ACTION_TOKEN_RE = re.compile(r"(?P<src>bar|off|\d+)/(?P<dst>bar|off|\d+):(?P<die>[1-6])(?P<hit>\*)?")
 STATE_FEATURE_DIM = 36
@@ -40,6 +46,7 @@ class TrajectoryBCDataset(Dataset[BCSample]):
         with path.open("r", encoding="utf-8") as fp:
             for line in fp:
                 record = json.loads(line)
+                record = normalize_bc_record(record)
                 if not record.get("selected_action_is_full_legal_action"):
                     continue
                 if record["selected_action_index"] is None:
@@ -73,6 +80,7 @@ class CandidatePolicyNet(nn.Module):
 
 
 def record_to_bc_sample(record: dict[str, Any]) -> BCSample:
+    record = normalize_bc_record(record)
     state_features = encode_state_record(record["state"])
     dice_features = encode_dice(record["dice"])
     candidate_rows = []
@@ -92,6 +100,19 @@ def record_to_bc_sample(record: dict[str, Any]) -> BCSample:
         source_file=record["source_file"],
         raw=record["raw"],
     )
+
+
+def normalize_bc_record(record: dict[str, Any]) -> dict[str, Any]:
+    if "legal_actions" in record and "selected_action_index" in record:
+        return record
+
+    legal_actions = [action_to_tokens(action) for action in legal_actions_from_record(record)]
+    selected_index = selected_action_index_from_record(record)
+    normalized = dict(record)
+    normalized["legal_actions"] = legal_actions
+    normalized["selected_action_index"] = selected_index
+    normalized["selected_action_is_full_legal_action"] = selected_index is not None
+    return normalized
 
 
 def collate_bc_samples(samples: list[BCSample]) -> dict[str, torch.Tensor]:

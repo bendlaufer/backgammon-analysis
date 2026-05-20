@@ -5,7 +5,7 @@ import json
 from typing import Any
 
 from bg_rl.mat import CheckerDecision, ParsedMatch
-from bg_rl.state import Action, BackgammonState, MoveStep
+from bg_rl.state import Action, BackgammonState, CubeState, MoveStep
 
 
 def state_to_dict(state: BackgammonState) -> dict[str, Any]:
@@ -33,6 +33,37 @@ def action_to_tokens(action: Action) -> list[str]:
 
 def action_to_key(action: Action) -> str:
     return " ".join(action_to_tokens(action))
+
+
+def action_from_tokens(tokens: list[str]) -> Action:
+    steps: list[MoveStep] = []
+    for token in tokens:
+        move, die_text = token.split(":", maxsplit=1)
+        source_text, destination_text = move.split("/", maxsplit=1)
+        hit = die_text.endswith("*")
+        die = int(die_text.rstrip("*"))
+        source = None if source_text == "bar" else int(source_text)
+        destination = None if destination_text == "off" else int(destination_text)
+        steps.append(MoveStep(source, destination, die, hit))
+    return tuple(steps)
+
+
+def state_from_dict(record: dict[str, Any]) -> BackgammonState:
+    cube = record.get("cube", {})
+    return BackgammonState(
+        points=tuple(record["points"]),
+        bar=tuple(record["bar"]),
+        off=tuple(record["off"]),
+        turn=int(record["turn"]),
+        cube=CubeState(
+            value=int(cube.get("value", 1)),
+            owner=cube.get("owner"),
+            crawford=bool(cube.get("crawford", False)),
+            jacoby=bool(cube.get("jacoby", False)),
+        ),
+        score=tuple(record["score"]),
+        match_length=record.get("match_length"),
+    )
 
 
 def decision_to_record(
@@ -67,6 +98,36 @@ def decision_to_record(
     }
 
 
+def decision_to_compact_record(
+    decision: CheckerDecision,
+    *,
+    source_file: str,
+    match_headers: dict[str, str],
+    game_outcome: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    legal_actions = decision.state.legal_actions(decision.dice)
+    selected_index = _selected_action_index(decision.action, legal_actions)
+    return {
+        "format": "compact_checker_decision_v1",
+        "source_file": source_file,
+        "game_index": decision.game_index,
+        "turn_number": decision.turn_number,
+        "player": decision.player,
+        "dice": list(decision.dice),
+        "state": state_to_dict(decision.state),
+        "selected_action": action_to_tokens(decision.action),
+        "selected_action_key": action_to_key(decision.action),
+        "selected_action_is_full_legal_action": selected_index is not None,
+        "raw": decision.raw,
+        "event_date": match_headers.get("EventDate", ""),
+        "result": match_headers.get("RE", ""),
+        "game_outcome": game_outcome,
+        "result_from_player_perspective": _result_from_player_perspective(
+            decision.player, game_outcome
+        ),
+    }
+
+
 def match_to_records(parsed: ParsedMatch, *, source_file: str) -> list[dict[str, Any]]:
     outcomes = {
         outcome.game_index: {
@@ -85,6 +146,35 @@ def match_to_records(parsed: ParsedMatch, *, source_file: str) -> list[dict[str,
         )
         for decision in parsed.decisions
     ]
+
+
+def match_to_compact_records(parsed: ParsedMatch, *, source_file: str) -> list[dict[str, Any]]:
+    outcomes = {
+        outcome.game_index: {
+            "winner": outcome.winner,
+            "points_won": outcome.points_won,
+            "score_after_game": list(outcome.score_after_game),
+        }
+        for outcome in parsed.game_outcomes
+    }
+    return [
+        decision_to_compact_record(
+            decision,
+            source_file=source_file,
+            match_headers=parsed.headers,
+            game_outcome=outcomes.get(decision.game_index),
+        )
+        for decision in parsed.decisions
+    ]
+
+
+def legal_actions_from_record(record: dict[str, Any]) -> tuple[Action, ...]:
+    return state_from_dict(record["state"]).legal_actions(tuple(record["dice"]))
+
+
+def selected_action_index_from_record(record: dict[str, Any]) -> int | None:
+    action = action_from_tokens(record["selected_action"])
+    return _selected_action_index(action, legal_actions_from_record(record))
 
 
 def record_to_json(record: dict[str, Any]) -> str:

@@ -6,7 +6,7 @@ import zipfile
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from bg_rl.mat import parse_match_text
-from bg_rl.trajectory import match_to_records, record_to_json
+from bg_rl.trajectory import match_to_compact_records, match_to_records, record_to_json
 
 
 def parse_args() -> argparse.Namespace:
@@ -15,6 +15,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--out", default="artifacts/trajectories/checker_decisions.jsonl")
     parser.add_argument("--limit", type=int, default=100, help="Maximum logs to export; 0 means all.")
     parser.add_argument("--progress-every", type=int, default=500)
+    parser.add_argument("--format", choices=("full", "compact"), default="full")
     return parser.parse_args()
 
 
@@ -35,7 +36,12 @@ def main() -> None:
                 parsed = parse_match_text(text, validate=True)
             except Exception as exc:
                 raise RuntimeError(f"failed while exporting {name}") from exc
-            for record in match_to_records(parsed, source_file=name):
+            records = (
+                match_to_records(parsed, source_file=name)
+                if args.format == "full"
+                else match_to_compact_records(parsed, source_file=name)
+            )
+            for record in records:
                 out.write(record_to_json(record) + "\n")
                 decisions += 1
             logs += 1

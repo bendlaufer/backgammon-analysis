@@ -1,7 +1,12 @@
 import argparse
 import json
 from pathlib import Path
+import sys
 from statistics import mean
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from bg_rl.trajectory import legal_actions_from_record, selected_action_index_from_record
 
 
 def parse_args() -> argparse.Namespace:
@@ -23,9 +28,12 @@ def main() -> None:
         for line in fp:
             record = json.loads(line)
             total += 1
-            candidate_count = len(record["legal_actions"])
+            candidate_count = len(record["legal_actions"]) if "legal_actions" in record else len(legal_actions_from_record(record))
             candidate_counts.append(candidate_count)
-            if record.get("selected_action_is_full_legal_action"):
+            selected_index = record.get("selected_action_index")
+            if selected_index is None and "legal_actions" not in record:
+                selected_index = selected_action_index_from_record(record)
+            if selected_index is not None:
                 full += 1
                 if candidate_count <= args.max_legal_actions:
                     trainable += 1

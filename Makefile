@@ -3,7 +3,7 @@ VENV_DIR := .venv
 VENV_PYTHON := $(VENV_DIR)/bin/python
 VENV_PIP := $(VENV_DIR)/bin/pip
 
-.PHONY: help setup install register-kernel freeze preview download-raw train-lm generate-lm test validate-mat export-trajectories trajectory-stats train-bc train-value clean-venv
+.PHONY: help setup install register-kernel freeze preview download-raw train-lm generate-lm test validate-mat export-trajectories export-compact-trajectories trajectory-stats train-bc train-value clean-venv
 
 help:
 	@echo "Available targets:"
@@ -18,6 +18,7 @@ help:
 	@echo "  make test       Run unit tests"
 	@echo "  make validate-mat Validate sample raw .mat logs against bg_rl rules"
 	@echo "  make export-trajectories Export sample validated checker decisions to JSONL"
+	@echo "  make export-compact-trajectories Export compact checker decisions to JSONL"
 	@echo "  make trajectory-stats Summarize exported trajectory JSONL rows"
 	@echo "  make train-bc   Train a small behavior-cloning policy baseline"
 	@echo "  make train-value Train a small supervised value baseline"
@@ -58,6 +59,9 @@ validate-mat:
 
 export-trajectories:
 	$(VENV_PYTHON) scripts/export_trajectories.py data/Arkadium_Backgammon_full_data_gamelogs_001.zip --limit 100
+
+export-compact-trajectories:
+	$(VENV_PYTHON) scripts/export_trajectories.py data/Arkadium_Backgammon_full_data_gamelogs_001.zip --format compact --limit 100 --out artifacts/trajectories/checker_decisions_compact.jsonl
 
 trajectory-stats:
 	$(VENV_PYTHON) scripts/trajectory_stats.py
