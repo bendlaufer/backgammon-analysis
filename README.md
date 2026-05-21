@@ -54,6 +54,12 @@ Train a small CPU-friendly supervised value baseline:
 make train-value
 ```
 
+Generate cube-aware self-play trajectories:
+
+```bash
+make generate-self-play
+```
+
 Run the browser player locally:
 
 ```bash

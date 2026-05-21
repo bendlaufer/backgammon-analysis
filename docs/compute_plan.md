@@ -23,6 +23,7 @@ Use G2 CPU resources for:
 - repeated full-corpus legal-action stats
 - full-corpus BC training
 - afterstate feature cache generation
+- cube-aware self-play generation
 - hyperparameter sweeps for small CPU models
 
 Lisbeth-style CPU resources are a better fit than GPUs for the current stage.

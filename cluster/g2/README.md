@@ -51,6 +51,7 @@ sbatch --requeue cluster/g2/export_compact_cpu.sub
 sbatch --requeue cluster/g2/stats_cpu.sub
 sbatch --requeue cluster/g2/train_value_cpu.sub
 sbatch --requeue cluster/g2/train_bc_cpu.sub
+sbatch --requeue cluster/g2/generate_self_play_cpu.sub
 ```
 
 Use `squeue -u YOUR_NETID` to monitor.
