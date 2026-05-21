@@ -22,6 +22,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--learning-rate", type=float, default=1e-3)
     parser.add_argument("--eval-ratio", type=float, default=0.2)
     parser.add_argument("--target-scale", type=float, default=16.0)
+    parser.add_argument("--num-workers", type=int, default=0)
     parser.add_argument("--seed", type=int, default=42)
     return parser.parse_args()
 
@@ -46,8 +47,18 @@ def main() -> None:
         [train_size, eval_size],
         generator=torch.Generator().manual_seed(args.seed),
     )
-    train_loader = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True)
-    eval_loader = DataLoader(eval_ds, batch_size=args.batch_size, shuffle=False)
+    train_loader = DataLoader(
+        train_ds,
+        batch_size=args.batch_size,
+        shuffle=True,
+        num_workers=args.num_workers,
+    )
+    eval_loader = DataLoader(
+        eval_ds,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=args.num_workers,
+    )
 
     model = ValueNet(hidden_dim=args.hidden_dim)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)

@@ -104,9 +104,13 @@ def decision_to_compact_record(
     source_file: str,
     match_headers: dict[str, str],
     game_outcome: dict[str, Any] | None = None,
+    trust_parser_validation: bool = False,
 ) -> dict[str, Any]:
-    legal_actions = decision.state.legal_actions(decision.dice)
-    selected_index = _selected_action_index(decision.action, legal_actions)
+    if trust_parser_validation:
+        is_full_legal_action = True
+    else:
+        legal_actions = decision.state.legal_actions(decision.dice)
+        is_full_legal_action = _selected_action_index(decision.action, legal_actions) is not None
     return {
         "format": "compact_checker_decision_v1",
         "source_file": source_file,
@@ -117,7 +121,7 @@ def decision_to_compact_record(
         "state": state_to_dict(decision.state),
         "selected_action": action_to_tokens(decision.action),
         "selected_action_key": action_to_key(decision.action),
-        "selected_action_is_full_legal_action": selected_index is not None,
+        "selected_action_is_full_legal_action": is_full_legal_action,
         "raw": decision.raw,
         "event_date": match_headers.get("EventDate", ""),
         "result": match_headers.get("RE", ""),
@@ -148,7 +152,12 @@ def match_to_records(parsed: ParsedMatch, *, source_file: str) -> list[dict[str,
     ]
 
 
-def match_to_compact_records(parsed: ParsedMatch, *, source_file: str) -> list[dict[str, Any]]:
+def match_to_compact_records(
+    parsed: ParsedMatch,
+    *,
+    source_file: str,
+    trust_parser_validation: bool = False,
+) -> list[dict[str, Any]]:
     outcomes = {
         outcome.game_index: {
             "winner": outcome.winner,
@@ -163,6 +172,7 @@ def match_to_compact_records(parsed: ParsedMatch, *, source_file: str) -> list[d
             source_file=source_file,
             match_headers=parsed.headers,
             game_outcome=outcomes.get(decision.game_index),
+            trust_parser_validation=trust_parser_validation,
         )
         for decision in parsed.decisions
     ]

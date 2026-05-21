@@ -61,7 +61,7 @@ export-trajectories:
 	$(VENV_PYTHON) scripts/export_trajectories.py data/Arkadium_Backgammon_full_data_gamelogs_001.zip --limit 100
 
 export-compact-trajectories:
-	$(VENV_PYTHON) scripts/export_trajectories.py data/Arkadium_Backgammon_full_data_gamelogs_001.zip --format compact --limit 100 --out artifacts/trajectories/checker_decisions_compact.jsonl
+	$(VENV_PYTHON) scripts/export_trajectories.py data/Arkadium_Backgammon_full_data_gamelogs_001.zip --format compact --trust-parser-validation --limit 100 --out artifacts/trajectories/checker_decisions_compact.jsonl
 
 trajectory-stats:
 	$(VENV_PYTHON) scripts/trajectory_stats.py

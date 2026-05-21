@@ -134,14 +134,17 @@ def _consume_token(
         state = _with_turn(state, player)
 
     action = _parse_action(token[dice_match.end() :], player, dice)
-    legal_actions = state.legal_actions(dice)
-    if action not in legal_actions:
-        action = _matching_legal_action(action, legal_actions) or action
-    if validate and action not in legal_actions and not _listed_steps_are_legal(state, action):
-        raise ValueError(
-            f"illegal action in game {game_index}, turn {turn_number}, player {player}: "
-            f"{token!r}; parsed={action}; legal_count={len(legal_actions)}"
-        )
+    legal_action_count = -1
+    if validate:
+        legal_actions = state.legal_actions(dice)
+        legal_action_count = len(legal_actions)
+        if action not in legal_actions:
+            action = _matching_legal_action(action, legal_actions) or action
+        if action not in legal_actions and not _listed_steps_are_legal(state, action):
+            raise ValueError(
+                f"illegal action in game {game_index}, turn {turn_number}, player {player}: "
+                f"{token!r}; parsed={action}; legal_count={len(legal_actions)}"
+            )
 
     decision = CheckerDecision(
         game_index=game_index,
@@ -150,7 +153,7 @@ def _consume_token(
         dice=dice,
         state=state,
         action=action,
-        legal_action_count=len(legal_actions),
+        legal_action_count=legal_action_count,
         raw=token,
     )
     return state.apply_action(action), decision

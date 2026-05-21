@@ -16,6 +16,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--limit", type=int, default=100, help="Maximum logs to export; 0 means all.")
     parser.add_argument("--progress-every", type=int, default=500)
     parser.add_argument("--format", choices=("full", "compact"), default="full")
+    parser.add_argument(
+        "--trust-parser-validation",
+        action="store_true",
+        help="For compact export, skip per-row legal-action membership checks after parse validation.",
+    )
     return parser.parse_args()
 
 
@@ -33,13 +38,22 @@ def main() -> None:
                 continue
             text = zf.read(name).decode("utf-8", errors="replace")
             try:
-                parsed = parse_match_text(text, validate=True)
+                parsed = parse_match_text(
+                    text,
+                    validate=not (
+                        args.format == "compact" and args.trust_parser_validation
+                    ),
+                )
             except Exception as exc:
                 raise RuntimeError(f"failed while exporting {name}") from exc
             records = (
                 match_to_records(parsed, source_file=name)
                 if args.format == "full"
-                else match_to_compact_records(parsed, source_file=name)
+                else match_to_compact_records(
+                    parsed,
+                    source_file=name,
+                    trust_parser_validation=args.trust_parser_validation,
+                )
             )
             for record in records:
                 out.write(record_to_json(record) + "\n")
