@@ -30,7 +30,7 @@ Lisbeth-style CPU resources are a better fit than GPUs for the current stage.
 The workload is dominated by Python legal-action generation and feature
 construction.
 
-Use `cluster/g2/*.sub` as starting Slurm scripts.
+Use `cluster/unicorn/*.sub` for the current Cornell Unicorn cluster.
 
 ## GPU
 

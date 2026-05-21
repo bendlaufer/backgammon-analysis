@@ -1,0 +1,35 @@
+#!/bin/bash
+#SBATCH -J bg_train_value
+#SBATCH -o bg_train_value_%j.out
+#SBATCH -e bg_train_value_%j.err
+#SBATCH -N 1
+#SBATCH -n 1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=32G
+#SBATCH -t 2:00:00
+#SBATCH --get-user-env
+
+set -euo pipefail
+
+: "${PROJECT_DIR:?Set PROJECT_DIR to the backgammon-analysis repo path}"
+: "${BG_DATA_DIR:?Set BG_DATA_DIR to shared/scratch data directory}"
+: "${CONDA_BASE:=/share/apps/software/anaconda3}"
+: "${CONDA_ENV:?Set CONDA_ENV to the conda env path or name}"
+
+export TMPDIR="${TMPDIR:-$HOME/tmp}"
+mkdir -p "$TMPDIR"
+
+source "$CONDA_BASE/etc/profile.d/conda.sh"
+conda activate "$CONDA_ENV"
+
+cd "$PROJECT_DIR"
+mkdir -p "$BG_DATA_DIR/artifacts/value-model-full-cpu"
+
+python scripts/train_value_model.py \
+  --data "$BG_DATA_DIR/artifacts/trajectories/checker_decisions_compact_full.jsonl" \
+  --output-dir "$BG_DATA_DIR/artifacts/value-model-full-cpu" \
+  --max-samples 0 \
+  --epochs 10 \
+  --batch-size 512 \
+  --hidden-dim 256 \
+  --num-workers 0

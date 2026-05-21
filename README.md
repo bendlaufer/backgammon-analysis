@@ -70,7 +70,8 @@ The current implementation is deliberately not an eXtreme Gammon clone. It is
 the exact simulator substrate needed for self-play, policy/value learning, and
 future cube/match-equity training.
 
-Cluster job templates live under `cluster/`; see [docs/compute_plan.md](docs/compute_plan.md).
+Cluster job templates live under `cluster/`; use `cluster/unicorn/` for the
+current Cornell Unicorn cluster and see [docs/compute_plan.md](docs/compute_plan.md).
 
 ## Setup
 
