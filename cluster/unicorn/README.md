@@ -64,6 +64,23 @@ sbatch --requeue --partition="${UNICORN_PARTITION:-default_partition}" cluster/u
 sbatch --requeue --partition="${UNICORN_PARTITION:-default_partition}" cluster/unicorn/generate_self_play_cpu.sub
 ```
 
+For a single overnight baseline run that leaves the browser engine loading the
+newly trained checker policy, submit:
+
+```bash
+source cluster/unicorn/unicorn.env
+sbatch --requeue --partition="${UNICORN_PARTITION:-default_partition}" cluster/unicorn/overnight_engine_cpu.sub
+```
+
+Optional knobs for a faster/slower overnight run:
+
+```bash
+export OVERNIGHT_BC_MAX_SAMPLES=300000
+export OVERNIGHT_BC_EPOCHS=5
+export OVERNIGHT_SELF_PLAY_GAMES=10000
+sbatch --requeue --partition="${UNICORN_PARTITION:-default_partition}" cluster/unicorn/overnight_engine_cpu.sub
+```
+
 Monitor:
 
 ```bash

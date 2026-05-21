@@ -1,0 +1,109 @@
+#!/bin/bash
+#SBATCH -J bg_overnight_engine
+#SBATCH -o bg_overnight_engine_%j.out
+#SBATCH -e bg_overnight_engine_%j.err
+#SBATCH -N 1
+#SBATCH -n 1
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=96G
+#SBATCH -t 12:00:00
+#SBATCH --get-user-env
+
+set -euo pipefail
+
+: "${PROJECT_DIR:?Set PROJECT_DIR to the backgammon-analysis repo path}"
+: "${BG_DATA_DIR:?Set BG_DATA_DIR to shared/scratch data directory}"
+: "${CONDA_BASE:=/share/apps/software/anaconda3}"
+: "${CONDA_ENV:?Set CONDA_ENV to the conda env path or name}"
+
+export TMPDIR="${TMPDIR:-$HOME/tmp}"
+mkdir -p "$TMPDIR"
+
+source "$CONDA_BASE/etc/profile.d/conda.sh"
+conda activate "$CONDA_ENV"
+
+cd "$PROJECT_DIR"
+
+TRAJECTORIES="$BG_DATA_DIR/artifacts/trajectories/checker_decisions_compact_full.jsonl"
+VALUE_DIR="$BG_DATA_DIR/artifacts/value-model-overnight-cpu"
+BC_DIR="$BG_DATA_DIR/artifacts/bc-policy-overnight-cpu"
+SELF_PLAY="$BG_DATA_DIR/artifacts/self-play/overnight_cube_self_play.jsonl"
+LOCAL_ENGINE_DIR="$PROJECT_DIR/artifacts/bc-policy-full-local"
+MANIFEST="$BG_DATA_DIR/artifacts/overnight_engine_${SLURM_JOB_ID}.txt"
+BC_MAX_SAMPLES="${OVERNIGHT_BC_MAX_SAMPLES:-300000}"
+BC_EPOCHS="${OVERNIGHT_BC_EPOCHS:-5}"
+VALUE_MAX_SAMPLES="${OVERNIGHT_VALUE_MAX_SAMPLES:-0}"
+SELF_PLAY_GAMES="${OVERNIGHT_SELF_PLAY_GAMES:-10000}"
+
+mkdir -p \
+  "$BG_DATA_DIR/artifacts/trajectories" \
+  "$VALUE_DIR" \
+  "$BC_DIR" \
+  "$(dirname "$SELF_PLAY")" \
+  "$LOCAL_ENGINE_DIR"
+
+echo "job_id=$SLURM_JOB_ID" | tee "$MANIFEST"
+echo "host=$(hostname)" | tee -a "$MANIFEST"
+echo "project_dir=$PROJECT_DIR" | tee -a "$MANIFEST"
+echo "bg_data_dir=$BG_DATA_DIR" | tee -a "$MANIFEST"
+echo "started_at=$(date -Is)" | tee -a "$MANIFEST"
+
+python -m unittest discover -s tests
+
+if [ ! -s "$TRAJECTORIES" ]; then
+  python scripts/export_trajectories.py \
+    "$BG_DATA_DIR/data/Arkadium_Backgammon_full_data_gamelogs_001.zip" \
+    --format compact \
+    --trust-parser-validation \
+    --limit 0 \
+    --out "$TRAJECTORIES" \
+    --progress-every 500
+else
+  echo "Reusing existing trajectories: $TRAJECTORIES"
+fi
+
+python scripts/train_value_model.py \
+  --data "$TRAJECTORIES" \
+  --output-dir "$VALUE_DIR" \
+  --max-samples "$VALUE_MAX_SAMPLES" \
+  --epochs 10 \
+  --batch-size 512 \
+  --hidden-dim 256 \
+  --num-workers 0
+
+python scripts/train_bc_policy.py \
+  --data "$TRAJECTORIES" \
+  --output-dir "$BC_DIR" \
+  --max-samples "$BC_MAX_SAMPLES" \
+  --max-legal-actions 512 \
+  --epochs "$BC_EPOCHS" \
+  --batch-size 128 \
+  --hidden-dim 256 \
+  --num-workers 0
+
+cp "$BC_DIR/model.pt" "$LOCAL_ENGINE_DIR/model.pt"
+
+python scripts/generate_self_play.py \
+  --games "$SELF_PLAY_GAMES" \
+  --out "$SELF_PLAY" \
+  --policy0 engine \
+  --policy1 engine \
+  --cube-policy0 heuristic \
+  --cube-policy1 heuristic \
+  --model-path "$BC_DIR/model.pt" \
+  --progress-every 100
+
+python - <<'PY'
+from bg_rl.engine import BasicEngine, engine_summary
+
+engine = BasicEngine("artifacts/bc-policy-full-local/model.pt")
+print(f"engine_summary={engine_summary(engine)}")
+if engine.model is None:
+    raise SystemExit("expected trained policy model to load")
+PY
+
+echo "bc_model=$BC_DIR/model.pt" | tee -a "$MANIFEST"
+echo "value_model=$VALUE_DIR/model.pt" | tee -a "$MANIFEST"
+echo "self_play=$SELF_PLAY" | tee -a "$MANIFEST"
+echo "local_engine_model=$LOCAL_ENGINE_DIR/model.pt" | tee -a "$MANIFEST"
+echo "finished_at=$(date -Is)" | tee -a "$MANIFEST"
