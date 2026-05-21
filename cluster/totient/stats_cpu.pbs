@@ -1,0 +1,20 @@
+#!/bin/sh
+#PBS -N bg_stats
+#PBS -j oe
+#PBS -l nodes=1:ppn=12
+#PBS -l walltime=04:00:00
+
+set -e
+
+: "${PROJECT_DIR:?Set PROJECT_DIR to the backgammon-analysis repo path}"
+: "${BG_DATA_DIR:?Set BG_DATA_DIR to the data directory}"
+
+module load anaconda/4.4.0
+
+cd "$PROJECT_DIR"
+
+python scripts/trajectory_stats.py \
+  --data "$BG_DATA_DIR/artifacts/trajectories/checker_decisions_compact_full.jsonl" \
+  --num-workers 12 \
+  --chunk-size 5000 \
+  --progress-every 100000
