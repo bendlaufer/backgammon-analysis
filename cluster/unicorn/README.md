@@ -33,6 +33,13 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
+The overnight scripts expect the raw game-log zip in shared storage:
+
+```bash
+mkdir -p "$BG_DATA_DIR/data"
+ls -lh "$BG_DATA_DIR/data/Arkadium_Backgammon_full_data_gamelogs_001.zip"
+```
+
 If `conda activate` complains that shell initialization is missing, run:
 
 ```bash

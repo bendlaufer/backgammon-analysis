@@ -24,6 +24,9 @@ conda activate "$CONDA_ENV"
 
 cd "$PROJECT_DIR"
 
+RAW_ZIP="$BG_DATA_DIR/data/Arkadium_Backgammon_full_data_gamelogs_001.zip"
+LOCAL_RAW_ZIP="$PROJECT_DIR/data/Arkadium_Backgammon_full_data_gamelogs_001.zip"
+SAMPLE_TRAJECTORIES="$PROJECT_DIR/artifacts/trajectories/sample_checker_decisions.jsonl"
 TRAJECTORIES="$BG_DATA_DIR/artifacts/trajectories/checker_decisions_compact_full.jsonl"
 VALUE_DIR="$BG_DATA_DIR/artifacts/value-model-overnight-cpu"
 BC_DIR="$BG_DATA_DIR/artifacts/bc-policy-overnight-cpu"
@@ -36,6 +39,8 @@ VALUE_MAX_SAMPLES="${OVERNIGHT_VALUE_MAX_SAMPLES:-0}"
 SELF_PLAY_GAMES="${OVERNIGHT_SELF_PLAY_GAMES:-10000}"
 
 mkdir -p \
+  "$PROJECT_DIR/data" \
+  "$PROJECT_DIR/artifacts/trajectories" \
   "$BG_DATA_DIR/artifacts/trajectories" \
   "$VALUE_DIR" \
   "$BC_DIR" \
@@ -48,11 +53,29 @@ echo "project_dir=$PROJECT_DIR" | tee -a "$MANIFEST"
 echo "bg_data_dir=$BG_DATA_DIR" | tee -a "$MANIFEST"
 echo "started_at=$(date -Is)" | tee -a "$MANIFEST"
 
+if [ ! -s "$RAW_ZIP" ]; then
+  echo "Missing raw dataset zip: $RAW_ZIP" >&2
+  echo "Copy Arkadium_Backgammon_full_data_gamelogs_001.zip there before running this job." >&2
+  exit 2
+fi
+
+if [ ! -e "$LOCAL_RAW_ZIP" ]; then
+  ln -s "$RAW_ZIP" "$LOCAL_RAW_ZIP"
+fi
+
+if [ ! -s "$SAMPLE_TRAJECTORIES" ]; then
+  python scripts/export_trajectories.py \
+    "$RAW_ZIP" \
+    --limit 100 \
+    --out "$SAMPLE_TRAJECTORIES" \
+    --progress-every 100
+fi
+
 python -m unittest discover -s tests
 
 if [ ! -s "$TRAJECTORIES" ]; then
   python scripts/export_trajectories.py \
-    "$BG_DATA_DIR/data/Arkadium_Backgammon_full_data_gamelogs_001.zip" \
+    "$RAW_ZIP" \
     --format compact \
     --trust-parser-validation \
     --limit 0 \
