@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Backgammon RL Player</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="toolbar">
+        <div>
+          <h1>Backgammon RL Player</h1>
+          <p id="status">Loading...</p>
+        </div>
+        <div class="controls">
+          <button id="newGame">New game</button>
+          <button id="roll">Roll</button>
+        </div>
+      </section>
+
+      <section class="table">
+        <div class="home">
+          <div class="bar-zone">
+            <span>Bar</span>
+            <div id="bar1" class="bar-stack"></div>
+            <div id="bar0" class="bar-stack"></div>
+          </div>
+          <div id="board" class="board"></div>
+          <div class="off-zone">
+            <span>Off</span>
+            <div id="off1" class="off-stack"></div>
+            <div id="off0" class="off-stack"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div>
+          <h2>Legal moves</h2>
+          <div id="dice" class="dice"></div>
+          <div id="moves" class="moves"></div>
+        </div>
+        <div>
+          <h2>Engine</h2>
+          <div id="engineLog" class="log"></div>
+        </div>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

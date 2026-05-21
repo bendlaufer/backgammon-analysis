@@ -3,7 +3,7 @@ VENV_DIR := .venv
 VENV_PYTHON := $(VENV_DIR)/bin/python
 VENV_PIP := $(VENV_DIR)/bin/pip
 
-.PHONY: help setup install register-kernel freeze preview download-raw train-lm generate-lm test validate-mat export-trajectories export-compact-trajectories trajectory-stats train-bc train-value clean-venv
+.PHONY: help setup install register-kernel freeze preview download-raw train-lm generate-lm test validate-mat export-trajectories export-compact-trajectories trajectory-stats train-bc train-value serve-player clean-venv
 
 help:
 	@echo "Available targets:"
@@ -22,6 +22,7 @@ help:
 	@echo "  make trajectory-stats Summarize exported trajectory JSONL rows"
 	@echo "  make train-bc   Train a small behavior-cloning policy baseline"
 	@echo "  make train-value Train a small supervised value baseline"
+	@echo "  make serve-player Run browser player at http://127.0.0.1:8000"
 	@echo "  make clean-venv Remove local virtual environment"
 
 setup:
@@ -71,6 +72,9 @@ train-bc:
 
 train-value:
 	$(VENV_PYTHON) scripts/train_value_model.py --max-samples 5000 --epochs 5
+
+serve-player:
+	$(VENV_PYTHON) web/server.py --host 127.0.0.1 --port 8000
 
 clean-venv:
 	rm -rf $(VENV_DIR)

@@ -54,6 +54,12 @@ Train a small CPU-friendly supervised value baseline:
 make train-value
 ```
 
+Run the browser player locally:
+
+```bash
+make serve-player
+```
+
 The current implementation is deliberately not an eXtreme Gammon clone. It is
 the exact simulator substrate needed for self-play, policy/value learning, and
 future cube/match-equity training.
