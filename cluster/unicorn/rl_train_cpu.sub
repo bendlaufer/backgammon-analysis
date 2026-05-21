@@ -1,0 +1,40 @@
+#!/bin/bash
+#SBATCH -J bg_rl_train
+#SBATCH -o bg_rl_train_%j.out
+#SBATCH -e bg_rl_train_%j.err
+#SBATCH -N 1
+#SBATCH -n 1
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=96G
+#SBATCH -t 12:00:00
+#SBATCH --get-user-env
+
+set -euo pipefail
+
+: "${PROJECT_DIR:?Set PROJECT_DIR to the backgammon-analysis repo path}"
+: "${BG_DATA_DIR:?Set BG_DATA_DIR to shared/scratch data directory}"
+: "${CONDA_BASE:=/share/apps/software/anaconda3}"
+: "${CONDA_ENV:?Set CONDA_ENV to the conda env path or name}"
+
+export TMPDIR="${TMPDIR:-$HOME/tmp}"
+mkdir -p "$TMPDIR"
+
+source "$CONDA_BASE/etc/profile.d/conda.sh"
+conda activate "$CONDA_ENV"
+
+cd "$PROJECT_DIR"
+
+ITERATION="${RL_ITERATION:-000}"
+DATA_GLOB="$BG_DATA_DIR/artifacts/rl-self-play/iter_${ITERATION}/*.jsonl"
+OUTPUT_DIR="$BG_DATA_DIR/artifacts/rl-policy-value/iter_${ITERATION}"
+mkdir -p "$OUTPUT_DIR"
+
+python scripts/train_rl_policy_value.py \
+  --data "$DATA_GLOB" \
+  --output-dir "$OUTPUT_DIR" \
+  --init-model "${RL_INIT_MODEL:-}" \
+  --max-samples "${RL_MAX_SAMPLES:-0}" \
+  --epochs "${RL_EPOCHS:-3}" \
+  --batch-size "${RL_BATCH_SIZE:-128}" \
+  --hidden-dim "${RL_HIDDEN_DIM:-256}" \
+  --num-workers 0

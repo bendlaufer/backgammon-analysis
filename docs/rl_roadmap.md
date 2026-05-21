@@ -16,6 +16,36 @@ through self-play and targeted evaluation while keeping the game rules exact.
 5. Evaluation harness against fixed tactical, backgame, bearoff, opening, and
    cube-position suites.
 
+## Self-Improvement Skeleton
+
+The repository now has the first end-to-end RL loop:
+
+- `bg_rl.rl.PolicyValueNet`: dual-head policy/value model.
+- `bg_rl.rl.SearchMovePolicy`: search-compatible move policy that emits replay
+  targets.
+- `scripts/generate_rl_self_play.py`: writes self-play replay shards.
+- `scripts/train_rl_policy_value.py`: trains a policy/value model from replay.
+- `cluster/unicorn/rl_self_play_array_cpu.sub`: Slurm job array for many shards.
+- `cluster/unicorn/rl_train_cpu.sub`: Slurm training job for one iteration.
+
+The current search is intentionally shallow but replay-compatible with deeper
+PUCT/MCTS. The next algorithmic upgrade is replacing the one-ply policy target
+with chance-node-aware tree search over dice rolls and learned afterstate
+values.
+
+## Scale-Up Plan
+
+1. Bootstrap: train BC/value models from human logs to avoid random early play.
+2. Iteration 0: generate many CPU self-play shards with heuristic cube policy.
+3. Train: fit the policy/value network on replay policy targets and game
+   outcomes.
+4. Promote: only advance a model when it beats the previous promoted model on a
+   fixed seeded evaluation suite.
+5. Upgrade search: add dice-chance expansion, cube decisions, and batched GPU
+   inference once model evaluation dominates simulator cost.
+6. Target XG weaknesses: maintain curated position suites from expert reports
+   and compare rollout/value decisions across promoted models.
+
 ## Design Principles
 
 - Keep rules exact and learning approximate.

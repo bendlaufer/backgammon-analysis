@@ -60,6 +60,13 @@ Generate cube-aware self-play trajectories:
 make generate-self-play
 ```
 
+Generate policy/value replay records for RL self-improvement:
+
+```bash
+make generate-rl-self-play
+make train-rl
+```
+
 Run the browser player locally:
 
 ```bash

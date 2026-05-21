@@ -95,6 +95,29 @@ squeue --me
 sacct -j <JOB_ID> --format=JobID,JobName,Partition,State,ExitCode,Elapsed,MaxRSS,NodeList
 ```
 
+## RL Self-Improvement Loop
+
+Generate one self-play iteration as parallel shards:
+
+```bash
+source cluster/unicorn/unicorn.env
+export RL_ITERATION=000
+export RL_GAMES_PER_SHARD=1000
+export RL_MODEL_PATH=/share/pierson/bl-backgammon-analysis/backgammon/artifacts/rl-policy-value/iter_previous/model.pt
+sbatch --requeue --partition="${UNICORN_PARTITION:-garg}" cluster/unicorn/rl_self_play_array_cpu.sub
+```
+
+Train from the completed shards:
+
+```bash
+source cluster/unicorn/unicorn.env
+export RL_ITERATION=000
+sbatch --requeue --partition="${UNICORN_PARTITION:-garg}" cluster/unicorn/rl_train_cpu.sub
+```
+
+Repeat by incrementing `RL_ITERATION` and setting `RL_MODEL_PATH` /
+`RL_INIT_MODEL` to the previous iteration's `model.pt`.
+
 ## GPU
 
 Do not request GPUs for the current MLP baselines. Use GPU later for larger

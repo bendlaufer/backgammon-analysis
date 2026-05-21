@@ -3,7 +3,7 @@ VENV_DIR := .venv
 VENV_PYTHON := $(VENV_DIR)/bin/python
 VENV_PIP := $(VENV_DIR)/bin/pip
 
-.PHONY: help setup install register-kernel freeze preview download-raw train-lm generate-lm test validate-mat export-trajectories export-compact-trajectories trajectory-stats train-bc train-value generate-self-play serve-player clean-venv
+.PHONY: help setup install register-kernel freeze preview download-raw train-lm generate-lm test validate-mat export-trajectories export-compact-trajectories trajectory-stats train-bc train-value generate-self-play generate-rl-self-play train-rl serve-player clean-venv
 
 help:
 	@echo "Available targets:"
@@ -23,6 +23,8 @@ help:
 	@echo "  make train-bc   Train a small behavior-cloning policy baseline"
 	@echo "  make train-value Train a small supervised value baseline"
 	@echo "  make generate-self-play Generate cube-aware self-play trajectories"
+	@echo "  make generate-rl-self-play Generate policy/value RL replay trajectories"
+	@echo "  make train-rl    Train policy/value network from RL replay"
 	@echo "  make serve-player Run browser player at http://127.0.0.1:8000"
 	@echo "  make clean-venv Remove local virtual environment"
 
@@ -76,6 +78,12 @@ train-value:
 
 generate-self-play:
 	$(VENV_PYTHON) scripts/generate_self_play.py --games 10 --cube-policy0 heuristic --cube-policy1 heuristic
+
+generate-rl-self-play:
+	$(VENV_PYTHON) scripts/generate_rl_self_play.py --games 10 --out artifacts/rl-self-play/shard_000.jsonl
+
+train-rl:
+	$(VENV_PYTHON) scripts/train_rl_policy_value.py --data artifacts/rl-self-play/*.jsonl --epochs 2
 
 serve-player:
 	$(VENV_PYTHON) web/server.py --host 127.0.0.1 --port 8000

@@ -1,0 +1,42 @@
+#!/bin/bash
+#SBATCH -J bg_rl_self_play
+#SBATCH -o bg_rl_self_play_%A_%a.out
+#SBATCH -e bg_rl_self_play_%A_%a.err
+#SBATCH -N 1
+#SBATCH -n 1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=32G
+#SBATCH -t 8:00:00
+#SBATCH --array=0-15
+#SBATCH --get-user-env
+
+set -euo pipefail
+
+: "${PROJECT_DIR:?Set PROJECT_DIR to the backgammon-analysis repo path}"
+: "${BG_DATA_DIR:?Set BG_DATA_DIR to shared/scratch data directory}"
+: "${CONDA_BASE:=/share/apps/software/anaconda3}"
+: "${CONDA_ENV:?Set CONDA_ENV to the conda env path or name}"
+
+export TMPDIR="${TMPDIR:-$HOME/tmp}"
+mkdir -p "$TMPDIR"
+
+source "$CONDA_BASE/etc/profile.d/conda.sh"
+conda activate "$CONDA_ENV"
+
+cd "$PROJECT_DIR"
+
+ITERATION="${RL_ITERATION:-000}"
+GAMES="${RL_GAMES_PER_SHARD:-1000}"
+MODEL_PATH="${RL_MODEL_PATH:-}"
+OUT_DIR="$BG_DATA_DIR/artifacts/rl-self-play/iter_${ITERATION}"
+mkdir -p "$OUT_DIR"
+
+python scripts/generate_rl_self_play.py \
+  --games "$GAMES" \
+  --out "$OUT_DIR/shard_${SLURM_ARRAY_TASK_ID}.jsonl" \
+  --seed "$((100000 * 10#$ITERATION + SLURM_ARRAY_TASK_ID + 42))" \
+  --model-path "$MODEL_PATH" \
+  --temperature "${RL_TEMPERATURE:-1.0}" \
+  --simulations "${RL_SIMULATIONS:-1}" \
+  --cube-policy heuristic \
+  --progress-every 100
