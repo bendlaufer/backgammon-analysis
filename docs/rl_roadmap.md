@@ -27,6 +27,9 @@ The repository now has the first end-to-end RL loop:
 - `scripts/train_rl_policy_value.py`: trains a policy/value model from replay.
 - `cluster/unicorn/rl_self_play_array_cpu.sub`: Slurm job array for many shards.
 - `cluster/unicorn/rl_train_cpu.sub`: Slurm training job for one iteration.
+- `cluster/unicorn/rl_evaluate_cpu.sub`: promotion gate against the current
+  promoted model.
+- `cluster/unicorn/submit_rl_loop.sh`: one-command Slurm dependency pipeline.
 
 The current search is intentionally shallow but replay-compatible with deeper
 PUCT/MCTS. The next algorithmic upgrade is replacing the one-ply policy target
@@ -45,6 +48,14 @@ values.
    inference once model evaluation dominates simulator cost.
 6. Target XG weaknesses: maintain curated position suites from expert reports
    and compare rollout/value decisions across promoted models.
+
+## Current Promotion Gate
+
+The first promotion gate evaluates the candidate against the current promoted
+model over fixed-seed self-play games with alternating sides. A candidate is
+promoted if it meets minimum win-rate and point-margin thresholds. This is not
+yet a claim of superiority over external engines; it is a regression guard that
+lets us scale self-play while preserving reproducibility.
 
 ## Design Principles
 

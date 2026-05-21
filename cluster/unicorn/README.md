@@ -118,6 +118,24 @@ sbatch --requeue --partition="${UNICORN_PARTITION:-garg}" cluster/unicorn/rl_tra
 Repeat by incrementing `RL_ITERATION` and setting `RL_MODEL_PATH` /
 `RL_INIT_MODEL` to the previous iteration's `model.pt`.
 
+Or submit a dependency-chained loop with one command:
+
+```bash
+source cluster/unicorn/unicorn.env
+bash cluster/unicorn/submit_rl_loop.sh \
+  --iterations 3 \
+  --partition garg \
+  --array 0-15 \
+  --games-per-shard 1000 \
+  --eval-games 100
+```
+
+The loop writes promoted models to:
+
+```text
+$BG_DATA_DIR/artifacts/rl-policy-value/promoted/model.pt
+```
+
 ## GPU
 
 Do not request GPUs for the current MLP baselines. Use GPU later for larger

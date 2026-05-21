@@ -1,0 +1,49 @@
+#!/bin/bash
+#SBATCH -J bg_rl_eval
+#SBATCH -o bg_rl_eval_%j.out
+#SBATCH -e bg_rl_eval_%j.err
+#SBATCH -N 1
+#SBATCH -n 1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=32G
+#SBATCH -t 4:00:00
+#SBATCH --get-user-env
+
+set -euo pipefail
+
+: "${PROJECT_DIR:?Set PROJECT_DIR to the backgammon-analysis repo path}"
+: "${BG_DATA_DIR:?Set BG_DATA_DIR to shared/scratch data directory}"
+: "${CONDA_BASE:=/share/apps/software/anaconda3}"
+: "${CONDA_ENV:?Set CONDA_ENV to the conda env path or name}"
+
+export TMPDIR="${TMPDIR:-$HOME/tmp}"
+mkdir -p "$TMPDIR"
+
+source "$CONDA_BASE/etc/profile.d/conda.sh"
+conda activate "$CONDA_ENV"
+
+cd "$PROJECT_DIR"
+
+ITERATION="${RL_ITERATION:-000}"
+CANDIDATE_MODEL="${RL_CANDIDATE_MODEL:-$BG_DATA_DIR/artifacts/rl-policy-value/iter_${ITERATION}/model.pt}"
+BASELINE_MODEL="${RL_BASELINE_MODEL:-$BG_DATA_DIR/artifacts/rl-policy-value/promoted/model.pt}"
+REPORT="$BG_DATA_DIR/artifacts/rl-eval/iter_${ITERATION}/report.json"
+PROMOTE_DIR="${RL_PROMOTE_DIR:-$BG_DATA_DIR/artifacts/rl-policy-value/promoted}"
+
+ALLOW_NO_BASELINE=()
+if [ "${RL_ALLOW_NO_BASELINE:-0}" = "1" ]; then
+  ALLOW_NO_BASELINE=(--allow-no-baseline)
+fi
+
+python scripts/evaluate_rl_models.py \
+  --candidate-model "$CANDIDATE_MODEL" \
+  --baseline-model "$BASELINE_MODEL" \
+  --report "$REPORT" \
+  --promote-dir "$PROMOTE_DIR" \
+  --games "${RL_EVAL_GAMES:-100}" \
+  --seed "${RL_EVAL_SEED:-42}" \
+  --temperature "${RL_EVAL_TEMPERATURE:-0.0}" \
+  --simulations "${RL_SIMULATIONS:-1}" \
+  --min-win-rate "${RL_MIN_WIN_RATE:-0.50}" \
+  --min-point-margin "${RL_MIN_POINT_MARGIN:--0.05}" \
+  "${ALLOW_NO_BASELINE[@]}"

@@ -67,6 +67,12 @@ make generate-rl-self-play
 make train-rl
 ```
 
+On Unicorn, submit a dependency-chained RL loop:
+
+```bash
+bash cluster/unicorn/submit_rl_loop.sh --iterations 3 --partition garg
+```
+
 Run the browser player locally:
 
 ```bash

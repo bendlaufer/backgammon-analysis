@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import torch
 from torch.utils.data import DataLoader
 
 from bg_rl.rl import (
@@ -15,6 +16,7 @@ from bg_rl.rl import (
 )
 from bg_rl.self_play import play_game
 from bg_rl.state import BackgammonState
+from scripts.evaluate_rl_models import evaluate
 from scripts.train_rl_policy_value import RLReplayDataset, collate_rl_samples, loss_and_metrics
 
 
@@ -96,6 +98,28 @@ class RLScaffoldTests(unittest.TestCase):
 
         self.assertEqual(record["format"], "rl_checker_decision_v1")
         self.assertEqual(len(record["legal_actions"]), len(record["search_policy"]))
+
+    def test_evaluate_models_returns_promotion_metrics(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            candidate_path = Path(tmpdir) / "candidate.pt"
+            baseline_path = Path(tmpdir) / "baseline.pt"
+            for path in (candidate_path, baseline_path):
+                model = PolicyValueNet(hidden_dim=16)
+                torch.save({"model_state_dict": model.state_dict(), "hidden_dim": 16}, path)
+
+            metrics = evaluate(
+                candidate_path=candidate_path,
+                baseline_path=baseline_path,
+                games=2,
+                seed=4,
+                hidden_dim=16,
+                temperature=0.0,
+                simulations=1,
+            )
+
+        self.assertEqual(metrics["games"], 2)
+        self.assertIn("candidate_win_rate", metrics)
+        self.assertIn("candidate_point_margin_per_game", metrics)
 
 
 if __name__ == "__main__":
