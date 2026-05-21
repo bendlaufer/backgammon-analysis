@@ -19,7 +19,12 @@ Set these paths in submitted jobs:
 ```bash
 export PROJECT_DIR=/path/to/backgammon-analysis
 export BG_DATA_DIR=/share/pierson/YOUR_PROJECT/backgammon
+export CONDA_ENV=/share/pierson/conda_virtualenvs/YOUR_NETID_backgammon
 ```
+
+Use `cluster/g2/g2.env.example` as a template. Copy it to
+`cluster/g2/g2.env` and fill in real values there. The filled `.env` file is
+ignored by git and should not be committed.
 
 Expected files under `BG_DATA_DIR`:
 
@@ -49,6 +54,8 @@ sbatch --requeue cluster/g2/train_bc_cpu.sub
 ```
 
 Use `squeue -u YOUR_NETID` to monitor.
+
+See `cluster/g2/setup_checklist.md` for a full setup checklist.
 
 ## Current Recommendation
 

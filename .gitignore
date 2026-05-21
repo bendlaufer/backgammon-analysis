@@ -22,3 +22,7 @@ hf_cache/
 
 # Notebook checkpoints
 .ipynb_checkpoints/
+
+# Local cluster configuration with private usernames/paths
+cluster/**/*.env
+!cluster/**/*.env.example
