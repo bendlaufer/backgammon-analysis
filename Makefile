@@ -3,7 +3,7 @@ VENV_DIR := .venv
 VENV_PYTHON := $(VENV_DIR)/bin/python
 VENV_PIP := $(VENV_DIR)/bin/pip
 
-.PHONY: help setup install register-kernel freeze preview download-raw train-lm generate-lm test validate-mat export-trajectories export-compact-trajectories trajectory-stats train-bc train-value generate-self-play generate-rl-self-play train-rl evaluate-rl serve-player clean-venv
+.PHONY: help setup install register-kernel freeze preview download-raw train-lm generate-lm test validate-mat export-trajectories export-compact-trajectories trajectory-stats train-bc train-value generate-self-play generate-rl-self-play train-rl evaluate-rl validate-benchmarks score-benchmarks serve-player clean-venv
 
 help:
 	@echo "Available targets:"
@@ -26,6 +26,8 @@ help:
 	@echo "  make generate-rl-self-play Generate policy/value RL replay trajectories"
 	@echo "  make train-rl    Train policy/value network from RL replay"
 	@echo "  make evaluate-rl Evaluate/promote an RL policy/value model"
+	@echo "  make validate-benchmarks Validate benchmark suite schema"
+	@echo "  make score-benchmarks Score active benchmark positions"
 	@echo "  make serve-player Run browser player at http://127.0.0.1:8000"
 	@echo "  make clean-venv Remove local virtual environment"
 
@@ -88,6 +90,12 @@ train-rl:
 
 evaluate-rl:
 	$(VENV_PYTHON) scripts/evaluate_rl_models.py --candidate-model artifacts/rl-policy-value/model.pt --allow-no-baseline --games 10 --report artifacts/rl-eval/report.json
+
+validate-benchmarks:
+	$(VENV_PYTHON) scripts/validate_benchmarks.py
+
+score-benchmarks:
+	$(VENV_PYTHON) scripts/score_benchmarks.py
 
 serve-player:
 	$(VENV_PYTHON) web/server.py --host 127.0.0.1 --port 8000

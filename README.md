@@ -73,6 +73,13 @@ On Unicorn, submit a dependency-chained RL loop:
 bash cluster/unicorn/submit_rl_loop.sh --iterations 3 --partition garg
 ```
 
+Validate and score the benchmark suite:
+
+```bash
+make validate-benchmarks
+make score-benchmarks
+```
+
 Run the browser player locally:
 
 ```bash

@@ -15,6 +15,7 @@ outputs/
 *.csv
 *.tsv
 *.zip
+!benchmarks/*.jsonl
 
 # Hugging Face and model caches
 .cache/
